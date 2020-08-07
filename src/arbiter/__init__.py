@@ -298,7 +298,13 @@ class Process(LoggingMixin):
             self.log('No data returned')
 
         for r in results:
-            data.extend(r)
+            try:
+                data.extend(r)
+            except TypeError:
+                if r is None:
+                    self.log('Ignoring result set of type: None')
+                else:
+                    self.log(f"Unable to merge '{type(r)}' with list. Use a custom merge routine.")
 
         return data
 
