@@ -342,7 +342,7 @@ class EmailHandler(NotificationHandler):
         msg = EmailMessage()
 
         if self.errors:
-            error_msg = '\n\n'.join(self.errors)
+            error_msg = '\n\n'.join([str(x) for x in self.errors])
 
             if 'body_error' not in self.options['email']:
                 body = self.default_body_error

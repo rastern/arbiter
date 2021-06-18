@@ -282,7 +282,8 @@ class Process(LoggingMixin):
                 handler = HANDLERS[klass](n, files=files, errors=errors)
             else:
                 continue
-
+            print(klass)
+            self.log(klass)
             try:
                 handler.send()
             except AttributeError:
@@ -387,7 +388,7 @@ class Process(LoggingMixin):
                             files=self.files,
                             errors=errors)
 
-        if errors and 'notifications' in self.config:
+        if errors and 'notifications' in self.config and self.config['notifications'].get('on_failure', False):
             self.log('Sending error notifications')
             self.notify(self.config['notifications'], errors=errors)
 
