@@ -1,4 +1,4 @@
-# Copyright © 2020 R.A. Stern
+# Copyright © 2020-2021 R.A. Stern
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import csv
