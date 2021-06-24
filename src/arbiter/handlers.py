@@ -349,7 +349,7 @@ class EmailHandler(NotificationHandler):
             else:
                 body = self.options['email']['body_error']
 
-            msg.set_content(arbiter.parse_string(body, errors=error_msg))
+            msg.set_content(arbiter.parse_string(body, errors=' '.join(error_msg)))
         else:
             msg.set_content(arbiter.parse_string(self.options['email']['body']))
 
