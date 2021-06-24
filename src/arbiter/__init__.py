@@ -1,4 +1,4 @@
-# Copyright © 2020 R.A. Stern
+# Copyright © 2020-2021 R.A. Stern
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import atexit
@@ -285,8 +285,8 @@ class Process(LoggingMixin):
 
             try:
                 handler.send()
-            except AttributeError:
-                self.raise_error(f"Missing required send() method", AttributeError)
+            except AttributeError as e:
+                self.raise_error(f"'{klass}' missing required send() method", AttributeError)
             except Exception as e:
                 self.log(f"Unable to send notification: {e}", exc_info=True)
 
@@ -298,7 +298,13 @@ class Process(LoggingMixin):
             self.log('No data returned')
 
         for r in results:
-            data.extend(r)
+            try:
+                data.extend(r)
+            except TypeError:
+                if r is None:
+                    self.log('Ignoring result set of type: None')
+                else:
+                    self.log(f"Unable to merge '{type(r)}' with list. Use a custom merge routine.")
 
         return data
 
@@ -323,17 +329,20 @@ class Process(LoggingMixin):
             except KeyError:
                 msg = f"Unknown output handler: {klass}"
                 err = UnknownHandlerError
-            except AttributeError as e:
-                msg = e
-                err = AttributeError
+                self.log(msg, level='error')
             except Exception as e:
-                exc = sys.exc_info()
+                tb = sys.exc_info()[2]
                 msg = f"Exception occurred: {e}"
                 err = Exception
+                self.log(e, level='error', exc_info=True)
 
             if msg:
-                self.raise_error(msg, err, exc)
                 errors.append(msg)
+
+                if tb:
+                    errors.append(''.join(traceback.format_tb(tb)))
+
+                self.raise_error(msg, err, True)
 
             # output specific notifications
             if 'notifications' in o:
@@ -372,18 +381,17 @@ class Process(LoggingMixin):
         log_queue.put_nowait(None)
         logthread.join()
 
-        if not errors:
+        if errors:
+            self.log('Errors encountered')
+            files=None
+        else:
             self.log('Generating process output')
             errors = self.generate(results)
 
-            if 'notifications' in self.config:
-                self.notify(self.config['notifications'],
-                            files=self.files,
-                            errors=errors)
-
-        if errors and 'notifications' in self.config:
-            self.log('Sending error notifications')
-            self.notify(self.config['notifications'], errors=errors)
+        if 'notifications' in self.config:
+            self.notify(self.config['notifications'],
+                        files=self.files,
+                        errors=errors)
 
         self.log('Process complete')
 

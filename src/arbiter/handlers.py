@@ -1,4 +1,4 @@
-# Copyright © 2020 R.A. Stern
+# Copyright © 2020-2021 R.A. Stern
 # SPDX-License-Identifier: LGPL-3.0-or-later
 
 import csv
@@ -342,14 +342,14 @@ class EmailHandler(NotificationHandler):
         msg = EmailMessage()
 
         if self.errors:
-            error_msg = '\n\n'.join(self.errors)
+            error_msg = '\n\n'.join([str(x) for x in self.errors])
 
             if 'body_error' not in self.options['email']:
                 body = self.default_body_error
             else:
                 body = self.options['email']['body_error']
 
-            msg.set_content(arbiter.parse_string(body, errors=error_msg))
+            msg.set_content(arbiter.parse_string(body, errors=' '.join(error_msg)))
         else:
             msg.set_content(arbiter.parse_string(self.options['email']['body']))
 
